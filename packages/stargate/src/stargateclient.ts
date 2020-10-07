@@ -1,9 +1,8 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { toHex } from "@cosmjs/encoding";
+import { toBase64, toHex } from "@cosmjs/encoding";
 import {
   Block,
   Coin,
-  decodeAminoPubkey,
   isSearchByHeightQuery,
   isSearchByIdQuery,
   PubKey,
@@ -87,8 +86,13 @@ function uint64FromProto(input: number | Long | null | undefined): Uint64 {
 
 function accountFromProto(input: cosmos.auth.v1beta1.IBaseAccount): Account {
   const { address, pubKey, accountNumber, sequence } = input;
-  // Pubkey is still Amino-encoded in BaseAccount (https://github.com/cosmos/cosmos-sdk/issues/6886)
-  const pubkey = pubKey?.value?.length ? decodeAminoPubkey(pubKey.value) : null;
+  // TODO: proper pubkey encoding/decoding
+  const pubkey = pubKey?.value
+    ? {
+        type: "tendermint/PubKeySecp256k1",
+        value: toBase64(pubKey.value.slice(2)),
+      }
+    : null;
   assert(address);
   return {
     address: address,
