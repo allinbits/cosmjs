@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { Bech32, fromBase64 } from "@cosmjs/encoding";
+import { fromBase64 } from "@cosmjs/encoding";
 import { DirectSecp256k1Wallet, makeAuthInfo, makeSignBytes, Registry } from "@cosmjs/proto-signing";
 import { assert, sleep } from "@cosmjs/utils";
 import { ReadonlyDate } from "readonly-date";
 
-import { cosmos } from "./codec";
+import { cosmos, google } from "./codec";
 import { assertIsBroadcastTxSuccess, PrivateStargateClient, StargateClient } from "./stargateclient";
 import {
   faucet,
-  makeRandomAddressBytes,
+  makeRandomAddress,
   nonExistentAddress,
   pendingWithoutSimapp,
   simapp,
@@ -17,8 +17,9 @@ import {
   validator,
 } from "./testutils.spec";
 
-const { AuthInfo, Tx, TxBody } = cosmos.tx;
-const { PublicKey } = cosmos.crypto;
+const { AuthInfo, Tx, TxBody } = cosmos.tx.v1beta1;
+const { PubKey } = cosmos.crypto.secp256k1;
+const { Any } = google.protobuf;
 
 describe("StargateClient", () => {
   describe("connect", () => {
@@ -253,7 +254,7 @@ describe("StargateClient", () => {
       const client = await StargateClient.connect(simapp.tendermintUrl);
       const wallet = await DirectSecp256k1Wallet.fromMnemonic(faucet.mnemonic);
       const [{ address, pubkey: pubkeyBytes }] = await wallet.getAccounts();
-      const publicKey = PublicKey.create({ secp256k1: pubkeyBytes });
+      const publicKey = PubKey.create({ key: pubkeyBytes });
       const registry = new Registry();
       const txBodyFields = {
         typeUrl: "/cosmos.tx.TxBody",
@@ -262,8 +263,8 @@ describe("StargateClient", () => {
             {
               typeUrl: "/cosmos.bank.MsgSend",
               value: {
-                fromAddress: Bech32.decode(address).data,
-                toAddress: makeRandomAddressBytes(),
+                fromAddress: address,
+                toAddress: makeRandomAddress(),
                 amount: [
                   {
                     denom: "ucosm",
@@ -277,7 +278,8 @@ describe("StargateClient", () => {
       };
       const txBodyBytes = registry.encode(txBodyFields);
       const txBody = TxBody.decode(txBodyBytes);
-      const authInfoBytes = makeAuthInfo([publicKey], 200000);
+      const publicKeyAny = Any.create({ type_url: "/cosmos.Xxx", value: publicKey.key });
+      const authInfoBytes = makeAuthInfo([publicKeyAny], 200000);
 
       const chainId = await client.getChainId();
       const { accountNumber, sequence } = (await client.getSequence(address))!;

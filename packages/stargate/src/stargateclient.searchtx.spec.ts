@@ -4,7 +4,7 @@ import { Coin, coins } from "@cosmjs/launchpad";
 import { DirectSecp256k1Wallet, makeAuthInfo, makeSignBytes, Registry } from "@cosmjs/proto-signing";
 import { assert, sleep } from "@cosmjs/utils";
 
-import { cosmos } from "./codec";
+import { cosmos, google } from "./codec";
 import {
   BroadcastTxResponse,
   isBroadcastTxFailure,
@@ -13,8 +13,9 @@ import {
 } from "./stargateclient";
 import { faucet, makeRandomAddress, pendingWithoutSimapp, simapp, simappEnabled } from "./testutils.spec";
 
-const { AuthInfo, Tx, TxBody } = cosmos.tx;
-const { PublicKey } = cosmos.crypto;
+const { AuthInfo, Tx, TxBody } = cosmos.tx.v1beta1;
+const { PubKey } = cosmos.crypto.secp256k1;
+const { Any } = google.protobuf;
 
 interface TestTxSend {
   readonly sender: string;
@@ -36,13 +37,13 @@ async function sendTokens(
   readonly tx: Uint8Array;
 }> {
   const [{ address: walletAddress, pubkey: pubkeyBytes }] = await wallet.getAccounts();
-  const publicKey = PublicKey.create({ secp256k1: pubkeyBytes });
+  const publicKey = PubKey.create({ key: pubkeyBytes });
   const txBodyFields = {
-    typeUrl: "/cosmos.tx.TxBody",
+    typeUrl: "/cosmos.tx.v1beta1.TxBody",
     value: {
       messages: [
         {
-          typeUrl: "/cosmos.bank.MsgSend",
+          typeUrl: "/cosmos.bank.v1beta1.MsgSend",
           value: {
             fromAddress: Bech32.decode(walletAddress).data,
             toAddress: Bech32.decode(recipient).data,
@@ -55,7 +56,8 @@ async function sendTokens(
   };
   const txBodyBytes = registry.encode(txBodyFields);
   const txBody = TxBody.decode(txBodyBytes);
-  const authInfoBytes = makeAuthInfo([publicKey], 200000);
+  const publicKeyAny = Any.create({ type_url: "/cosmos.secp256k1.PubKey", value: publicKey.key });
+  const authInfoBytes = makeAuthInfo([publicKeyAny], 200000);
 
   const { accountNumber, sequence } = (await client.getSequence(walletAddress))!;
   const chainId = await client.getChainId();

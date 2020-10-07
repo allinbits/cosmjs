@@ -23,7 +23,7 @@ describe("QueryClient", () => {
         ...toAscii(simapp.denomFee),
       ]);
       const data = await client.queryVerified("bank", key);
-      const response = cosmos.Coin.decode(data);
+      const response = cosmos.base.v1beta1.Coin.decode(data);
       expect(response.amount).toMatch(nonNegativeIntegerMatcher);
       expect(response.denom).toEqual(simapp.denomFee);
 
@@ -40,7 +40,7 @@ describe("QueryClient", () => {
         ...toAscii(simapp.denomFee),
       ]);
       const data = await client.queryVerified("bank", key);
-      const response = cosmos.Coin.decode(data);
+      const response = cosmos.base.v1beta1.Coin.decode(data);
       expect(response.amount).toMatch(nonNegativeIntegerMatcher);
       expect(response.denom).toEqual(simapp.denomFee);
 
@@ -54,10 +54,12 @@ describe("QueryClient", () => {
       const [client, tmClient] = await makeClient(simapp.tendermintUrlWs);
 
       const requestData = Uint8Array.from(
-        cosmos.bank.QueryAllBalancesRequest.encode({ address: toAccAddress(unused.address) }).finish(),
+        cosmos.bank.v1beta1.QueryAllBalancesRequest.encode({
+          address: unused.address,
+        }).finish(),
       );
-      const data = await client.queryUnverified(`/cosmos.bank.Query/AllBalances`, requestData);
-      const response = cosmos.bank.QueryAllBalancesResponse.decode(data);
+      const data = await client.queryUnverified(`/cosmos.bank.v1beta1.Query/AllBalances`, requestData);
+      const response = cosmos.bank.v1beta1.QueryAllBalancesResponse.decode(data);
       expect(response.balances.length).toEqual(2);
 
       tmClient.disconnect();
@@ -68,10 +70,12 @@ describe("QueryClient", () => {
       const [client, tmClient] = await makeClient(simapp.tendermintUrlHttp);
 
       const requestData = Uint8Array.from(
-        cosmos.bank.QueryAllBalancesRequest.encode({ address: toAccAddress(unused.address) }).finish(),
+        cosmos.bank.v1beta1.QueryAllBalancesRequest.encode({
+          address: unused.address,
+        }).finish(),
       );
-      const data = await client.queryUnverified(`/cosmos.bank.Query/AllBalances`, requestData);
-      const response = cosmos.bank.QueryAllBalancesResponse.decode(data);
+      const data = await client.queryUnverified(`/cosmos.bank.v1beta1.Query/AllBalances`, requestData);
+      const response = cosmos.bank.v1beta1.QueryAllBalancesResponse.decode(data);
       expect(response.balances.length).toEqual(2);
 
       tmClient.disconnect();

@@ -1,12 +1,15 @@
-import { encodeAminoPubkey } from "@cosmjs/launchpad";
+/* eslint-disable @typescript-eslint/naming-convention */
+import { fromBase64 } from "@cosmjs/encoding";
 import { Client as TendermintClient } from "@cosmjs/tendermint-rpc";
 import { assert } from "@cosmjs/utils";
 import Long from "long";
 
+import { google } from "../codec";
 import { nonExistentAddress, pendingWithoutSimapp, simapp, unused, validator } from "../testutils.spec";
 import { AuthExtension, setupAuthExtension } from "./auth";
 import { QueryClient } from "./queryclient";
-import { toAccAddress } from "./utils";
+
+const { Any } = google.protobuf;
 
 async function makeClientWithAuth(rpcUrl: string): Promise<[QueryClient & AuthExtension, TendermintClient]> {
   const tmClient = await TendermintClient.connect(rpcUrl);
@@ -23,7 +26,7 @@ describe("AuthExtension", () => {
       assert(account);
 
       expect(account).toEqual({
-        address: toAccAddress(unused.address),
+        address: unused.address,
         // pubKey not set
         accountNumber: Long.fromNumber(unused.accountNumber, true),
         // sequence not set
@@ -38,9 +41,14 @@ describe("AuthExtension", () => {
 
       const account = await client.auth.account(validator.address);
       assert(account);
+      // TODO: Sort out pubkey encoding
+      const publicKeyAny = Any.create({
+        type_url: "/cosmos.crypto.secp256k1.PubKey",
+        value: Uint8Array.from([0x0a, 0x21, ...fromBase64(validator.pubkey.value)]),
+      });
       expect(account).toEqual({
-        address: toAccAddress(validator.address),
-        pubKey: encodeAminoPubkey(validator.pubkey),
+        address: validator.address,
+        pubKey: publicKeyAny,
         // accountNumber not set
         sequence: Long.fromNumber(validator.sequence, true),
       });
@@ -68,7 +76,7 @@ describe("AuthExtension", () => {
         const account = await client.auth.unverified.account(unused.address);
         assert(account);
         expect(account).toEqual({
-          address: toAccAddress(unused.address),
+          address: unused.address,
           // pubKey not set
           accountNumber: Long.fromNumber(unused.accountNumber, true),
           // sequence not set
@@ -82,10 +90,14 @@ describe("AuthExtension", () => {
         const [client, tmClient] = await makeClientWithAuth(simapp.tendermintUrl);
 
         const account = await client.auth.unverified.account(validator.address);
+        const publicKeyAny = Any.create({
+          type_url: "/cosmos.crypto.secp256k1.PubKey",
+          value: Uint8Array.from([...[0x0a, 0x21], ...fromBase64(validator.pubkey.value)]),
+        });
         assert(account);
         expect(account).toEqual({
-          address: toAccAddress(validator.address),
-          pubKey: encodeAminoPubkey(validator.pubkey),
+          address: validator.address,
+          pubKey: publicKeyAny,
           // accountNumber not set
           sequence: Long.fromNumber(validator.sequence, true),
         });
@@ -94,12 +106,12 @@ describe("AuthExtension", () => {
       });
 
       it("returns null for non-existent address", async () => {
-        pending("This fails with Error: Query failed with (1): internal");
         pendingWithoutSimapp();
         const [client, tmClient] = await makeClientWithAuth(simapp.tendermintUrl);
 
-        const account = await client.auth.unverified.account(nonExistentAddress);
-        expect(account).toBeNull();
+        await expectAsync(client.auth.unverified.account(nonExistentAddress)).toBeRejectedWithError(
+          /account cosmos(.+) not found/i,
+        );
 
         tmClient.disconnect();
       });
