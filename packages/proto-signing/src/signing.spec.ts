@@ -1,20 +1,15 @@
 /* eslint-disable @typescript-eslint/naming-convention */
 import { Bech32, fromBase64, fromHex, toHex } from "@cosmjs/encoding";
 
-import { cosmos } from "./codec";
+import { cosmos, google } from "./codec";
 import { DirectSecp256k1Wallet } from "./directsecp256k1wallet";
 import { defaultRegistry } from "./msgs";
 import { Registry, TxBodyValue } from "./registry";
 import { makeAuthInfo, makeSignBytes } from "./signing";
 
-const { AuthInfo, Tx, TxBody } = cosmos.tx;
-const { PublicKey } = cosmos.crypto;
-
-export function pendingWithoutSimapp(): void {
-  if (!process.env.SIMAPP_ENABLED) {
-    return pending("Set SIMAPP_ENABLED to enable Simapp based tests");
-  }
-}
+const { AuthInfo, Tx, TxBody } = cosmos.tx.v1beta1;
+const { PubKey } = cosmos.crypto.secp256k1;
+const { Any } = google.protobuf;
 
 const faucet = {
   mnemonic:
@@ -27,7 +22,7 @@ const faucet = {
 };
 
 // Test vectors were generated using this command with Ethan’s custom fork of Cosmos-SDK with printf:
-// simd tx bank send --sign-mode direct --chain-id simd-testing testgen cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu 1234567ucosm -b block
+// simd tx bank send --sign-mode direct --chain-id simd-testing validator cosmos1qypqxpq9qcrsszg2pvxq6rs0zqg3yyc5lzv7xu 1234567ucosm -b block
 const testVectors = [
   {
     sequence: 0,
@@ -62,7 +57,7 @@ const testVectors = [
 
 describe("signing", () => {
   const chainId = "simd-testing";
-  const toAddress = Uint8Array.from({ length: 20 }, (_, i) => i + 1);
+  const toAddress = "cosmos10dyr9899g6t0pelew4nvf4j5c3jcgv0r73qga5";
 
   const sendAmount = "1234567";
   const sendDenom = "ucosm";
@@ -76,9 +71,11 @@ describe("signing", () => {
       const parsedTestTx = Tx.decode(fromHex(signedTxBytes));
       expect(parsedTestTx.signatures.length).toEqual(1);
       expect(parsedTestTx.authInfo?.signerInfos?.length).toEqual(1);
-      expect(parsedTestTx.authInfo?.signerInfos![0].publicKey!.secp256k1).toEqual(pubkeyBytes);
+      expect(Uint8Array.from(parsedTestTx.authInfo?.signerInfos![0].publicKey?.value ?? [])).toEqual(
+        pubkeyBytes,
+      );
       expect(parsedTestTx.authInfo?.signerInfos![0].modeInfo!.single!.mode).toEqual(
-        cosmos.tx.signing.SignMode.SIGN_MODE_DIRECT,
+        cosmos.tx.signing.v1beta1.SignMode.SIGN_MODE_DIRECT,
       );
       expect(parsedTestTx.authInfo?.fee!.amount).toEqual([]);
       expect(parsedTestTx.authInfo?.fee!.gasLimit!.toString()).toEqual(gasLimit.toString());
@@ -102,16 +99,16 @@ describe("signing", () => {
     const myRegistry = new Registry();
     const wallet = await DirectSecp256k1Wallet.fromMnemonic(faucet.mnemonic);
     const [{ address, pubkey: pubkeyBytes }] = await wallet.getAccounts();
-    const publicKey = PublicKey.create({
-      secp256k1: pubkeyBytes,
+    const publicKey = PubKey.create({
+      key: pubkeyBytes,
     });
 
     const txBodyFields: TxBodyValue = {
       messages: [
         {
-          typeUrl: "/cosmos.bank.MsgSend",
+          typeUrl: "/cosmos.bank.v1beta1.MsgSend",
           value: {
-            fromAddress: Bech32.decode(address).data,
+            fromAddress: address,
             toAddress: toAddress,
             amount: [
               {
@@ -124,12 +121,13 @@ describe("signing", () => {
       ],
     };
     const txBodyBytes = myRegistry.encode({
-      typeUrl: "/cosmos.tx.TxBody",
+      typeUrl: "/cosmos.tx.v1beta1.TxBody",
       value: txBodyFields,
     });
     const txBody = TxBody.decode(txBodyBytes);
 
-    const authInfoBytes = makeAuthInfo([publicKey], gasLimit);
+    const publicKeyAny = Any.create({ type_url: "/cosmos.Xxx", value: publicKey.key });
+    const authInfoBytes = makeAuthInfo([publicKeyAny], gasLimit);
     const accountNumber = 1;
 
     await Promise.all(
