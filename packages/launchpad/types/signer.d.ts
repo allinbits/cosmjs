@@ -1,6 +1,6 @@
 import { StdSignDoc } from "./encoding";
 import { StdSignature } from "./types";
-export declare type Algo = "secp256k1" | "ed25519" | "sr25519";
+export declare type Algo = "eth_secp256k1" | "secp256k1" | "ed25519" | "sr25519";
 export interface AccountData {
   /** A printable address (typically bech32 encoded) */
   readonly address: string;

@@ -1,6 +1,6 @@
 import * as logs from "./logs";
 export { logs };
-export { pubkeyToAddress, rawSecp256k1PubkeyToAddress } from "./address";
+export { pubkeyToAddress, rawSecp256k1PubkeyToAddress, rawEthSecp256k1PubkeyToAddress } from "./address";
 export { Coin, coin, coins, parseCoins } from "./coins";
 export {
   Account,
@@ -79,6 +79,19 @@ export {
   SlashingParametersResponse,
   SlashingSigningInfosResponse,
   StakingExtension,
+  StakingDelegatorDelegationsResponse,
+  StakingDelegatorUnbondingDelegationsResponse,
+  StakingDelegatorTransactionsResponse,
+  StakingDelegatorValidatorsResponse,
+  StakingDelegatorValidatorResponse,
+  StakingDelegationResponse,
+  StakingUnbondingDelegationResponse,
+  StakingRedelegationsResponse,
+  StakingValidatorsResponse,
+  StakingValidatorResponse,
+  StakingValidatorDelegationsResponse,
+  StakingValidatorUnbondingDelegationsResponse,
+  StakingHistoricalInfoResponse,
   StakingParametersResponse,
   StakingPoolResponse,
   SupplyExtension,
@@ -92,13 +105,15 @@ export {
   decodeBech32Pubkey,
   encodeAminoPubkey,
   encodeBech32Pubkey,
+  encodeEthSecp256k1Pubkey,
   encodeSecp256k1Pubkey,
 } from "./pubkey";
 export { findSequenceForSignedTx } from "./sequence";
-export { encodeSecp256k1Signature, decodeSignature } from "./signature";
+export { encodeEthSecp256k1Signature, encodeSecp256k1Signature, decodeSignature } from "./signature";
 export { AccountData, Algo, OfflineSigner, SignResponse } from "./signer";
 export { CosmosFeeTable, SigningCosmosClient } from "./signingcosmosclient";
 export { isStdTx, isWrappedStdTx, makeStdTx, CosmosSdkTx, StdTx, WrappedStdTx, WrappedTx } from "./tx";
 export { pubkeyType, PubKey, StdFee, StdSignature } from "./types";
-export { makeCosmoshubPath, executeKdf, KdfConfiguration } from "./wallet";
+export { makeCosmoshubPath, makeEthermintPath, executeKdf, KdfConfiguration } from "./wallet";
 export { extractKdfConfiguration, Secp256k1Wallet } from "./secp256k1wallet";
+export { EthSecp256k1Wallet } from "./ethsecp256k1wallet";

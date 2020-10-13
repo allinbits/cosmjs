@@ -1,7 +1,15 @@
-import { Ripemd160, Sha256 } from "@cosmjs/crypto";
+import { Keccak256, Ripemd160, Sha256 } from "@cosmjs/crypto";
 import { Bech32, fromBase64 } from "@cosmjs/encoding";
 
 import { PubKey, pubkeyType } from "./types";
+
+export function rawEthSecp256k1PubkeyToAddress(pubkeyRaw: Uint8Array, prefix: string): string {
+  if (pubkeyRaw.length !== 33) {
+    throw new Error(`Invalid Secp256k1 pubkey length (compressed): ${pubkeyRaw.length}`);
+  }
+  const hash = new Keccak256(pubkeyRaw).digest();
+  return Bech32.encode(prefix, hash);
+}
 
 export function rawSecp256k1PubkeyToAddress(pubkeyRaw: Uint8Array, prefix: string): string {
   if (pubkeyRaw.length !== 33) {
@@ -17,6 +25,9 @@ export function rawSecp256k1PubkeyToAddress(pubkeyRaw: Uint8Array, prefix: strin
 export function pubkeyToAddress(pubkey: PubKey, prefix: string): string {
   const pubkeyBytes = fromBase64(pubkey.value);
   switch (pubkey.type) {
+    case pubkeyType.eth_secp256k1: {
+      return rawEthSecp256k1PubkeyToAddress(pubkeyBytes, prefix);
+    }
     case pubkeyType.secp256k1: {
       return rawSecp256k1PubkeyToAddress(pubkeyBytes, prefix);
     }

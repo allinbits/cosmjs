@@ -3,6 +3,16 @@ import { arrayContentEquals } from "@cosmjs/utils";
 
 import { PubKey, pubkeyType } from "./types";
 
+export function encodeEthSecp256k1Pubkey(pubkey: Uint8Array): PubKey {
+  if (pubkey.length !== 33 || (pubkey[0] !== 0x02 && pubkey[0] !== 0x03)) {
+    throw new Error("Public key must be compressed secp256k1, i.e. 33 bytes starting with 0x02 or 0x03");
+  }
+  return {
+    type: pubkeyType.eth_secp256k1,
+    value: toBase64(pubkey),
+  };
+}
+
 export function encodeSecp256k1Pubkey(pubkey: Uint8Array): PubKey {
   if (pubkey.length !== 33 || (pubkey[0] !== 0x02 && pubkey[0] !== 0x03)) {
     throw new Error("Public key must be compressed secp256k1, i.e. 33 bytes starting with 0x02 or 0x03");
@@ -16,6 +26,7 @@ export function encodeSecp256k1Pubkey(pubkey: Uint8Array): PubKey {
 // As discussed in https://github.com/binance-chain/javascript-sdk/issues/163
 // Prefixes listed here: https://github.com/tendermint/tendermint/blob/d419fffe18531317c28c29a292ad7d253f6cafdf/docs/spec/blockchain/encoding.md#public-key-cryptography
 // Last bytes is varint-encoded length prefix
+const pubkeyAminoPrefixEthSecp256k1 = fromHex("0000000000"); // @FIXME
 const pubkeyAminoPrefixSecp256k1 = fromHex("eb5ae98721");
 const pubkeyAminoPrefixEd25519 = fromHex("1624de6420");
 const pubkeyAminoPrefixSr25519 = fromHex("0dfb1005");
@@ -27,7 +38,15 @@ const pubkeyAminoPrefixLength = pubkeyAminoPrefixSecp256k1.length;
 export function decodeAminoPubkey(data: Uint8Array): PubKey {
   const aminoPrefix = data.slice(0, pubkeyAminoPrefixLength);
   const rest = data.slice(pubkeyAminoPrefixLength);
-  if (arrayContentEquals(aminoPrefix, pubkeyAminoPrefixSecp256k1)) {
+  if (arrayContentEquals(aminoPrefix, pubkeyAminoPrefixEthSecp256k1)) {
+    if (rest.length !== 33) {
+      throw new Error("Invalid rest data length. Expected 33 bytes (compressed secp256k1 pubkey).");
+    }
+    return {
+      type: pubkeyType.eth_secp256k1,
+      value: toBase64(rest),
+    };
+  } else if (arrayContentEquals(aminoPrefix, pubkeyAminoPrefixSecp256k1)) {
     if (rest.length !== 33) {
       throw new Error("Invalid rest data length. Expected 33 bytes (compressed secp256k1 pubkey).");
     }
@@ -74,6 +93,9 @@ export function encodeAminoPubkey(pubkey: PubKey): Uint8Array {
   let aminoPrefix: Uint8Array;
   switch (pubkey.type) {
     // Note: please don't add cases here without writing additional unit tests
+    case pubkeyType.eth_secp256k1:
+      aminoPrefix = pubkeyAminoPrefixEthSecp256k1;
+      break;
     case pubkeyType.secp256k1:
       aminoPrefix = pubkeyAminoPrefixSecp256k1;
       break;

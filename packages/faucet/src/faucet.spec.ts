@@ -14,9 +14,9 @@ function pendingWithoutWasmd(): void {
 
 const httpUrl = "http://localhost:1317";
 const defaultTokenConfig: TokenConfiguration = {
-  bankTokens: ["ucosm", "ustake"],
+  bankTokens: ["ueth", "ustake"],
 };
-const defaultAddressPrefix = "cosmos";
+const defaultAddressPrefix = "eth";
 
 function makeRandomAddress(): string {
   return Bech32.encode(defaultAddressPrefix, Random.getBytes(20));
@@ -46,7 +46,7 @@ describe("Faucet", () => {
       pendingWithoutWasmd();
       const faucet = await Faucet.make(httpUrl, defaultAddressPrefix, defaultTokenConfig, faucetMnemonic, 3);
       const tickers = await faucet.availableTokens();
-      expect(tickers).toEqual(["ucosm", "ustake"]);
+      expect(tickers).toEqual(["ueth", "ustake"]);
     });
   });
 
@@ -58,7 +58,7 @@ describe("Faucet", () => {
       await faucet.send({
         amount: {
           amount: "23456",
-          denom: "ucosm",
+          denom: "ueth",
         },
         sender: faucet.holderAddress,
         recipient: recipient,
@@ -70,7 +70,7 @@ describe("Faucet", () => {
       expect(account.balance).toEqual([
         {
           amount: "23456",
-          denom: "ucosm",
+          denom: "ueth",
         },
       ]);
     });
@@ -86,7 +86,7 @@ describe("Faucet", () => {
       assert(distributorBalance);
       expect(distributorBalance).toEqual([
         jasmine.objectContaining({
-          denom: "ucosm",
+          denom: "ueth",
         }),
         jasmine.objectContaining({
           denom: "ustake",
@@ -102,7 +102,7 @@ describe("Faucet", () => {
       pendingWithoutWasmd();
       const faucet = await Faucet.make(httpUrl, defaultAddressPrefix, defaultTokenConfig, faucetMnemonic, 3);
       const recipient = makeRandomAddress();
-      await faucet.credit(recipient, "ucosm");
+      await faucet.credit(recipient, "ueth");
 
       const readOnlyClient = new CosmosClient(httpUrl);
       const account = await readOnlyClient.getAccount(recipient);
@@ -110,7 +110,7 @@ describe("Faucet", () => {
       expect(account.balance).toEqual([
         {
           amount: "10000000",
-          denom: "ucosm",
+          denom: "ueth",
         },
       ]);
     });
@@ -138,7 +138,7 @@ describe("Faucet", () => {
       pendingWithoutWasmd();
       const faucet = await Faucet.make(httpUrl, defaultAddressPrefix, defaultTokenConfig, faucetMnemonic, 3);
       const tickers = faucet.configuredTokens();
-      expect(tickers).toEqual(["ucosm", "ustake"]);
+      expect(tickers).toEqual(["ueth", "ustake"]);
     });
   });
 

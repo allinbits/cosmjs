@@ -1,4 +1,5 @@
 import { PubKey } from "./types";
+export declare function encodeEthSecp256k1Pubkey(pubkey: Uint8Array): PubKey;
 export declare function encodeSecp256k1Pubkey(pubkey: Uint8Array): PubKey;
 /**
  * Decodes a pubkey in the Amino binary format to a type/value object.

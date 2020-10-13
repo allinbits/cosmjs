@@ -4,6 +4,15 @@ import { pubkeyToAddress } from "./address";
 
 describe("address", () => {
   describe("pubkeyToAddress", () => {
+    it("works for EthSecp256k1 compressed", () => {
+      const prefix = "eth";
+      const pubkey = {
+        type: "ethermint/PubKeySecp256k1",
+        value: "AtQaCqFnshaZQp6rIkvAPyzThvCvXSDO+9AzbxVErqJP",
+      };
+      expect(pubkeyToAddress(pubkey, prefix)).toEqual("eth1h806c7khnvmjlywdrkdgk2vrayy2mmvf9rxk2r");
+    });
+
     it("works for Secp256k1 compressed", () => {
       const prefix = "cosmos";
       const pubkey = {

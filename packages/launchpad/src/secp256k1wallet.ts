@@ -27,7 +27,7 @@ import {
   supportedAlgorithms,
 } from "./wallet";
 
-const serializationTypeV1 = "secp256k1wallet-v1";
+export const serializationTypeV1 = "secp256k1wallet-v1";
 
 /**
  * A KDF configuration that is not very strong but can be used on the main thread.
@@ -66,7 +66,7 @@ interface Secp256k1DerivationJson {
   readonly prefix: string;
 }
 
-function isSecp256k1DerivationJson(thing: unknown): thing is Secp256k1DerivationJson {
+export function isSecp256k1DerivationJson(thing: unknown): thing is Secp256k1DerivationJson {
   if (!isNonNullObject(thing)) return false;
   if (typeof (thing as Secp256k1DerivationJson).hdPath !== "string") return false;
   if (typeof (thing as Secp256k1DerivationJson).prefix !== "string") return false;
@@ -204,7 +204,10 @@ export class Secp256k1Wallet implements OfflineSigner {
     }
   }
 
-  private static async deserializeTypeV1(serialization: string, password: string): Promise<Secp256k1Wallet> {
+  protected static async deserializeTypeV1(
+    serialization: string,
+    password: string,
+  ): Promise<Secp256k1Wallet> {
     const root = JSON.parse(serialization);
     if (!isNonNullObject(root)) throw new Error("Root document is not an object.");
     const encryptionKey = await executeKdf(password, (root as any).kdf);
@@ -212,14 +215,14 @@ export class Secp256k1Wallet implements OfflineSigner {
   }
 
   /** Base secret */
-  private readonly secret: EnglishMnemonic;
+  protected readonly secret: EnglishMnemonic;
   /** Derivation instruction */
-  private readonly accounts: readonly Secp256k1Derivation[];
+  protected readonly accounts: readonly Secp256k1Derivation[];
   /** Derived data */
-  private readonly pubkey: Uint8Array;
-  private readonly privkey: Uint8Array;
+  protected readonly pubkey: Uint8Array;
+  protected readonly privkey: Uint8Array;
 
-  private constructor(
+  protected constructor(
     mnemonic: EnglishMnemonic,
     hdPath: HdPath,
     privkey: Uint8Array,
@@ -241,7 +244,7 @@ export class Secp256k1Wallet implements OfflineSigner {
     return this.secret.toString();
   }
 
-  private get address(): string {
+  protected get address(): string {
     return rawSecp256k1PubkeyToAddress(this.pubkey, this.accounts[0].prefix);
   }
 

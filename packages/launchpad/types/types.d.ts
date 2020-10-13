@@ -12,6 +12,8 @@ export interface PubKey {
   readonly value: string;
 }
 export declare const pubkeyType: {
+  /** @see https://github.com/ChainSafe/ethermint/blob/v0.2.1/crypto/codec.go#L16 */
+  eth_secp256k1: "ethermint/PubKeySecp256k1";
   /** @see https://github.com/tendermint/tendermint/blob/v0.33.0/crypto/ed25519/ed25519.go#L22 */
   secp256k1: "tendermint/PubKeySecp256k1";
   /** @see https://github.com/tendermint/tendermint/blob/v0.33.0/crypto/secp256k1/secp256k1.go#L23 */

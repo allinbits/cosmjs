@@ -1,5 +1,5 @@
 import { pathToString } from "@cosmjs/crypto";
-import { makeCosmoshubPath, OfflineSigner, Secp256k1Wallet } from "@cosmjs/launchpad";
+import { makeEthermintPath, OfflineSigner, EthSecp256k1Wallet } from "@cosmjs/launchpad";
 
 export async function createWallets(
   mnemonic: string,
@@ -12,8 +12,8 @@ export async function createWallets(
   // first account is the token holder
   const numberOfIdentities = 1 + numberOfDistributors;
   for (let i = 0; i < numberOfIdentities; i++) {
-    const path = makeCosmoshubPath(i);
-    const wallet = await Secp256k1Wallet.fromMnemonic(mnemonic, path, addressPrefix);
+    const path = makeEthermintPath(i);
+    const wallet = await EthSecp256k1Wallet.fromMnemonic(mnemonic, path, addressPrefix);
     const [{ address }] = await wallet.getAccounts();
     if (logging) {
       const role = i === 0 ? "token holder " : `distributor ${i}`;

@@ -1,7 +1,8 @@
-import { HdPath } from "@cosmjs/crypto";
+import { EnglishMnemonic, HdPath } from "@cosmjs/crypto";
 import { StdSignDoc } from "./encoding";
 import { AccountData, OfflineSigner, SignResponse } from "./signer";
 import { EncryptionConfiguration, KdfConfiguration } from "./wallet";
+export declare const serializationTypeV1 = "secp256k1wallet-v1";
 /**
  * This interface describes a JSON object holding the encrypted wallet and the meta data.
  * All fields in here must be JSON types.
@@ -24,6 +25,7 @@ interface Secp256k1DerivationJson {
   readonly hdPath: string;
   readonly prefix: string;
 }
+export declare function isSecp256k1DerivationJson(thing: unknown): thing is Secp256k1DerivationJson;
 /**
  * The data of a wallet serialization that is encrypted.
  * All fields in here must be JSON types.
@@ -33,6 +35,13 @@ export interface Secp256k1WalletData {
   readonly accounts: readonly Secp256k1DerivationJson[];
 }
 export declare function extractKdfConfiguration(serialization: string): KdfConfiguration;
+/**
+ * Derivation information required to derive a keypair and an address from a mnemonic.
+ */
+interface Secp256k1Derivation {
+  readonly hdPath: HdPath;
+  readonly prefix: string;
+}
 export declare class Secp256k1Wallet implements OfflineSigner {
   /**
    * Restores a wallet from the given BIP39 mnemonic.
@@ -74,17 +83,23 @@ export declare class Secp256k1Wallet implements OfflineSigner {
     serialization: string,
     encryptionKey: Uint8Array,
   ): Promise<Secp256k1Wallet>;
-  private static deserializeTypeV1;
+  protected static deserializeTypeV1(serialization: string, password: string): Promise<Secp256k1Wallet>;
   /** Base secret */
-  private readonly secret;
+  protected readonly secret: EnglishMnemonic;
   /** Derivation instruction */
-  private readonly accounts;
+  protected readonly accounts: readonly Secp256k1Derivation[];
   /** Derived data */
-  private readonly pubkey;
-  private readonly privkey;
-  private constructor();
+  protected readonly pubkey: Uint8Array;
+  protected readonly privkey: Uint8Array;
+  protected constructor(
+    mnemonic: EnglishMnemonic,
+    hdPath: HdPath,
+    privkey: Uint8Array,
+    pubkey: Uint8Array,
+    prefix: string,
+  );
   get mnemonic(): string;
-  private get address();
+  protected get address(): string;
   getAccounts(): Promise<readonly AccountData[]>;
   sign(signerAddress: string, signDoc: StdSignDoc): Promise<SignResponse>;
   /**

@@ -5,13 +5,31 @@ import {
   decodeBech32Pubkey,
   encodeAminoPubkey,
   encodeBech32Pubkey,
+  encodeEthSecp256k1Pubkey,
   encodeSecp256k1Pubkey,
 } from "./pubkey";
 import { PubKey } from "./types";
 
 describe("pubkey", () => {
+  describe("encodeEthSecp256k1Pubkey", () => {
+    it("encodes a compressed pubkey", () => {
+      const pubkey = fromBase64("AtQaCqFnshaZQp6rIkvAPyzThvCvXSDO+9AzbxVErqJP");
+      expect(encodeEthSecp256k1Pubkey(pubkey)).toEqual({
+        type: "ethermint/PubKeySecp256k1",
+        value: "AtQaCqFnshaZQp6rIkvAPyzThvCvXSDO+9AzbxVErqJP",
+      });
+    });
+
+    it("throws for uncompressed public keys", () => {
+      const pubkey = fromBase64(
+        "BE8EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQE7WHpoHoNswYeoFkuYpYSKK4mzFzMV/dB0DVAy4lnNU=",
+      );
+      expect(() => encodeEthSecp256k1Pubkey(pubkey)).toThrowError(/public key must be compressed secp256k1/i);
+    });
+  });
+
   describe("encodeSecp256k1Pubkey", () => {
-    it("encodes a compresed pubkey", () => {
+    it("encodes a compressed pubkey", () => {
       const pubkey = fromBase64("AtQaCqFnshaZQp6rIkvAPyzThvCvXSDO+9AzbxVErqJP");
       expect(encodeSecp256k1Pubkey(pubkey)).toEqual({
         type: "tendermint/PubKeySecp256k1",

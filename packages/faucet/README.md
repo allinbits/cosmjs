@@ -70,6 +70,7 @@ The faucet uses standard HD paths for each blockchain, e.g.
 IOV        m/44'/234'/a'
 Lisk       m/44'/134'/a'
 Cosmos     m/44'/118'/0'/0/a
+Ethermint  m/44'/60'/0'/0/a
 ```
 
 where `a` is a 0-based index of the account. Account 0 is the token holder and

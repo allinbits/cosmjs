@@ -1,5 +1,10 @@
 import { HdPath } from "@cosmjs/crypto";
 /**
+ * The Ethermint derivation path in the form `m/44'/60'/0'/0/a`
+ * with 0-based account index `a`.
+ */
+export declare function makeEthermintPath(a: number): HdPath;
+/**
  * The Cosmoshub derivation path in the form `m/44'/118'/0'/0/a`
  * with 0-based account index `a`.
  */
